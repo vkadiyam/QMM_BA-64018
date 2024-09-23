@@ -1,0 +1,126 @@
+---
+title: "QMM_Assignment_2"
+author: "Vineeth Kadiyam"
+date: "2024-09-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(lpSolve)
+```
+
+```{r}
+A12 <- matrix(c(20,900,420,15,1200,360,12,750,300), nrow = 3, ncol = 3, byrow = TRUE)
+colnames(A12) <-(c('Space_Req', 'Sales Forecast(PerDay)', 'Profit')) 
+rownames(A12) <-(c('Large', 'Medium','Small'))
+A12
+```
+
+```{r}
+A12 = matrix(c(750,900,450), nrow = 3, ncol = 1, byrow = TRUE)
+colnames(A12)=(c('Excess Capacity')) 
+rownames(A12)=(c('Plantl', 'Plant2', 'Plant3')) 
+A12
+```
+
+Let 
+    L1, M1, S1 = Number of large, medium, and small units produced at Plant 1
+    L2, M2, S2 = Number of large, medium, and small units produced at Plant 2
+    L3, M3, S3 = Number of large, medium, and small units produced at Plant 3
+
+The objective function is
+    
+    Max Z = 420(L1 + L2 + L3) + 360(M1 + M2 + M3) + 300(S1 + S2 + S3) 
+    
+Rearranging this, the objective becomes 
+   
+    Max Z = 420L1 + 360M1 + 300S1 + 420L2 + 360M2 + 300S2 + 420L3 + 360M3 + 300S3 
+    
+subject to the following constraints.,
+ 
+ Production Capacity Constraints:    
+     
+     L1 + M1 + S1 ≤ 750
+     L2 + M2 + S2 ≤ 900
+     L3 + M3 + S3 ≤ 450
+ 
+ Storage Space Constraints:     
+     
+     20L1 + 15M1 + 12S1 ≤ 13000
+     20L2 + 15M2 + 12S2 ≤ 12000
+     20L3 + 15M3 + 12S3 ≤ 5000
+ 
+ Sales Forecast Constraints:   
+     
+     L1 + L2 + L3 ≤ 900
+     M1 + M2 + M3 ≤ 1200
+     S1 + S2 + S3 ≤ 750
+     
+ Capacity Usage Equality:
+ 
+ (L1 + M1 + S1) ∗ (100/750) = (L2 + M2 + S2) ∗ (100/900) = (L3 + M3 + S3) ∗ (100/450)    
+Non negativity constraints: 
+
+         L1, L2, L3, M1, M2, M3, S1, S2, S3 ≥ 0
+         
+```{r}
+#Objective Function
+Object <- c(420, 360, 300, 420, 360, 300, 420, 360, 300)
+```
+         
+```{r}
+#Constraints
+
+Cnstrants  <- matrix(c(
+  
+  # Production capacity
+  1, 1, 1, 0, 0, 0, 0, 0, 0,  # Plant 1
+  0, 0, 0, 1, 1, 1, 0, 0, 0,  # Plant 2
+  0, 0, 0, 0, 0, 0, 1, 1, 1,  # Plant 3
+  
+  # Storage
+  20, 15, 12, 0, 0, 0, 0, 0, 0,  # Plant 1
+  0, 0, 0, 20, 15, 12, 0, 0, 0,  # Plant 2
+  0, 0, 0, 0, 0, 0, 20, 15, 12,  # Plant 3
+  
+  # Sales forecast
+  1, 0, 0, 1, 0, 0, 1, 0, 0,  # Large units
+  0, 1, 0, 0, 1, 0, 0, 1, 0,  # Medium units
+  0, 0, 1, 0, 0, 1, 0, 0, 1,  # Small units
+  
+  6, 6, 6, -5, -5, -5, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, -2, -2, -2,
+  3, 3, 3, 0, 0, 0, -5, -5, -5
+  
+), nrow=12, byrow=TRUE)
+Cnstrants
+```
+
+```{r}
+#Define the constraint direction
+Direct<-c("<=","<=","<=","<=","<=","<=","<=","<=","<=","=","=","=")
+Direct
+```
+
+```{r}
+# RHS of the constraints
+RHS <- c(750, 900, 450, 13000, 12000, 5000, 900, 1200, 750, 0, 0, 0)
+RHS
+```
+         
+```{r}
+#Solve the linear programming problem
+linear_prog_result <-lp("max", Object, Cnstrants, Direct, RHS)
+linear_prog_result
+```
+         
+```{r}
+#Values of decision variables
+linear_prog_result$solution
+```
+         
+         
